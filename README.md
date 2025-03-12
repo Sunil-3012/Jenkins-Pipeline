@@ -116,6 +116,8 @@ stage('deploy') {
     }
 }
 ```
+![Image Alt](https://github.com/Sunil-3012/Jenkins-Pipeline/blob/main/Netflix-MyApp.png?raw=true)
+
 ## 🌟 Key Benefits  
 
 ✅ **Automated CI/CD Workflow** – Streamlines software delivery by automating build, test, and deployment processes.  

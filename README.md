@@ -17,7 +17,9 @@ The pipeline is hosted on **AWS EC2 instances**:
 
 - 🟢 **Jenkins Server** – Orchestrates the pipeline.  
 - 🟢 **SonarQube Server** – Performs static code analysis.  
-- 🟢 **Tomcat Server** – Hosts the deployed application.  
+- 🟢 **Tomcat Server** – Hosts the deployed application.
+
+![Image Alt]([image_url](https://github.com/Sunil-3012/Jenkins-Pipeline/blob/main/pipeline.png?raw=true))
 
 ## 🔹 Tech Stack  
 | Technology | Purpose |

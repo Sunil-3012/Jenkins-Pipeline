@@ -35,7 +35,7 @@ The pipeline is hosted on **AWS EC2 instances**:
 ## 🔹 Pipeline Workflow 
 
 ### ✅ **1. Clone Source Code from GitHub**  
-Clones latest code from the **GitHub repository**.  
+Clones latest code from the **[GitHub Repository]([https://www.example.com](https://github.com/Sunil-3012/java-project-maven))**. 
 
 ```groovy
 stage('Clone from GIT') {

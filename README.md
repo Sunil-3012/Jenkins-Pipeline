@@ -10,12 +10,12 @@ The pipeline follows these steps:
 2. **Build & Package with Maven** – Compiles the project and generates a `.war` file.  
 3. **Upload Artifacts to Amazon S3** – Stores the build output securely.  
 4. **Code Quality Analysis with SonarQube** – Ensures security & maintainability.  
-5. **Deploy to Apache Tomcat** – Automatically deploys the application.  
+5. **Deploy with Ansible** – Automates deployment to Apache Tomcat on app servers, with parameterized stages for Dev/Prod environments.  
 
 ## 🔹 Infrastructure Setup  
 The pipeline is hosted on **AWS EC2 instances**:  
 
-- 🟢 **Jenkins Server** – Orchestrates the pipeline.  
+- 🟢 **Jenkins and Ansible Server** – Orchestrates the pipeline.  
 - 🟢 **SonarQube Server** – Performs static code analysis.  
 - 🟢 **Tomcat Server** – Hosts the deployed application.
 
@@ -29,7 +29,7 @@ The pipeline is hosted on **AWS EC2 instances**:
 | **Maven** | Build & dependency management |
 | **Amazon S3** | Artifact storage |
 | **SonarQube** | Code quality & security |
-| **Apache Tomcat** | Deployment server |
+| **Ansible, Tomcat** | Deployment server |
 | **AWS EC2** | Cloud infrastructure |
 
 ## 🔹 Pipeline Workflow 
@@ -105,15 +105,14 @@ stage('package') {
 ```
 
 
-### ✅ **7. Deployed Application to Tomcat Server**
+### ✅ **7. Deployed Application to Tomcat Server through Ansible**
 Deploys the `.war` file to Apache Tomcat 9 running on an EC2 instance.
 
 ```groovy
-stage('deploy') {
-    steps {
-        deploy adapters: [tomcat9(credentialsId: 'tomcatcreds', path: '', url: 'http://54.226.156.83:8080/')], 
-        contextPath: 'MyApp', war: '**/*.war'
-    }
+stage('deployment') {
+            steps {
+                ansiblePlaybook credentialsId: 'linuxceds', disableHostKeyChecking: true, installation: 'ansible', inventory: '/etc/ansible/hosts', playbook: '/etc/ansible/deploy.yml', vaultTmpPath: ''
+            }
 }
 ```
 ![Image Alt](https://github.com/Sunil-3012/Jenkins-Pipeline/blob/main/Netflix-MyApp.png?raw=true)
@@ -157,7 +156,7 @@ Feel free to submit issues or pull requests to improve this pipeline!
 pipeline {
     agent any
     stages {
-        stage('Clone from GIT') {
+        stage('checkout git') {
             steps {
                 git 'https://github.com/Sunil-3012/java-project-maven.git'
             }
@@ -172,29 +171,30 @@ pipeline {
                 sh 'mvn test'
             }
         }
-        stage('SonarQube Analysis') {
+        stage('package') {
+            steps{
+                sh 'mvn clean package'
+            }
+        }
+        stage('arthifacts S3') {
+            steps {
+                s3Upload consoleLogLevel: 'INFO', dontSetBuildResultOnFailure: false, dontWaitForConcurrentBuildCompletion: false, entries: [[bucket: 's3-arthifact-bkt/', excludedFile: '', flatten: false, gzipFiles: false, keepForever: false, managedArtifacts: false, noUploadOnFailure: false, selectedRegion: 'us-east-1', showDirectlyInBrowser: false, sourceFile: '**/*.war', storageClass: 'STANDARD', uploadFromSlave: false, useServerSideEncryption: true]], pluginFailureResultConstraint: 'FAILURE', profileName: 'S3creds', userMetadata: []
+            }
+        }
+        stage('sonarQube') {
             steps {
                 withSonarQubeEnv('SonarQube') {
                     sh 'mvn org.sonarsource.scanner.maven:sonar-maven-plugin:3.7.0.1746:sonar'
                 }
             }
         }
-        stage('arthifacts to S3') {
+        stage('deployment') {
             steps {
-                s3Upload consoleLogLevel: 'INFO', dontSetBuildResultOnFailure: false, dontWaitForConcurrentBuildCompletion: false, entries: [[bucket: 's3-arthifact-bkt/', excludedFile: '', flatten: false, gzipFiles: false, keepForever: false, managedArtifacts: false, noUploadOnFailure: false, selectedRegion: 'us-east-1', showDirectlyInBrowser: false, sourceFile: '**/*.war', storageClass: 'STANDARD', uploadFromSlave: false, useServerSideEncryption: true]], pluginFailureResultConstraint: 'FAILURE', profileName: 's3creds', userMetadata: []
-            }
-        }
-        stage('package') {
-            steps {
-                sh 'mvn clean package'
-            }
-        }
-        stage('deploy') {
-            steps {
-                deploy adapters: [tomcat9(credentialsId: 'tomcatcreds', path: '', url: 'http://54.226.156.83:8080/')], contextPath: 'MyApp', war: '**/*.war'
+                ansiblePlaybook credentialsId: 'linuxceds', disableHostKeyChecking: true, installation: 'ansible', inventory: '/etc/ansible/hosts', playbook: '/etc/ansible/deploy.yml', vaultTmpPath: ''
             }
         }
     }
 }
+
 ```
 
